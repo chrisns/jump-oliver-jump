@@ -1,0 +1,18 @@
+name: Publish
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - uses: docker://governmentpaas/awscli:latest
+        run: aws s3 sync --delete --acl public-read --exclude '.*' ./ s3://www.cns.me.uk/o/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

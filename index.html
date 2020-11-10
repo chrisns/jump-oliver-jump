@@ -1,0 +1,199 @@
+
+<html>
+<head>
+  <title>Jump Oliver Jump</title>
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.js"></script>
+  <script src="https://cdn.rawgit.com/brandonaaron/jquery-overlaps/f1a1d4b4/jquery.overlaps.js"></script>
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      background: black;
+      font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;
+    }
+
+    #background {
+      background: url("images/bg.jpg");
+      background-size: cover;
+      opacity: 0.2;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0px;
+
+    }
+
+    #oliver {
+      top: 300px;
+      position: relative;
+      background: url("images/homer-run.gif");
+      background-size: contain;
+      height: 75px;
+      width: 75px;
+    }
+
+    #jump {
+      background: blue;
+      height: 100px;
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      color: white;
+      text-align: center;
+      font-size: 50px;
+      z-index: 100;
+    }
+
+    .zombie {
+      width: 75px;
+      background-size: contain;
+      height: 75px;
+      position: absolute;
+      right: 0;
+    }
+
+    #gameover {
+      background: url("images/gameover.png");
+      background-size: cover;
+      z-index: 1000;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      font-size: 5em;
+      display: none;
+    }
+
+    #gameover p {
+      color: red;
+      position: absolute;
+      bottom: 0;
+      text-align: center;
+      width: 100%;
+    }
+
+    #gameover p#score {
+      bottom: 15%;
+    }
+
+    #gameover p#credit {
+      top: 5%;
+      text-align: right;
+      font-size: 50%;
+    }
+
+
+  </style>
+  <script>
+    $(() => {
+      const start_time = Date.now()
+
+      $.fn.disableSelection = function () {
+        return this
+          .attr("unselectable", "on")
+          .css("user-select", "none")
+          .on("selectstart", false)
+      }
+
+      const move_oliver_down = () =>
+        $("#oliver").animate({
+          top: window.innerHeight - 100 - 75
+        }, {
+          queue: true,
+          duration: 3000,
+        }).promise()
+
+      const move_oliver_up = () =>
+        $("#oliver").position().top > 0 &&
+        $("#oliver")
+          .stop(true, false)
+          .animate({
+            top: "-=100"
+          }, {
+            queue: true,
+            duration: 300,
+          }).promise()
+          .then(move_oliver_down)
+
+      move_oliver_down()
+
+      $(document).keydown(function(e) {
+        if (e.which=38) {
+          move_oliver_up()
+
+        }
+      });
+
+      $("#background, .zombie, #jump").on("click touchstart", (e) => {
+        event.preventDefault()
+        move_oliver_up()
+      })
+
+      const new_zombie = () =>
+        $("<div class=\"zombie\"></div>")
+          .appendTo("body")
+          .css("top", Math.random() * window.innerHeight - 100)
+          .css("background-image", `url("images/attackers/giphy (${Math.floor(Math.random() * 7) + 1}).gif")`)
+          .animate({
+            right: window.innerWidth
+          }, {
+            queue: true,
+            easing: "linear",
+            duration: 3000,
+          })
+
+      const zombie_timer = setInterval(new_zombie, 500)
+
+      const is_there_a_collision = () => {
+
+        if ($(".zombie")
+          .filter((i, e) => $(e).position().left <= $("#oliver").width())
+          .filter((i, e) => {
+
+            let zombie_height = $(e).height()
+            let zombie_top = $(e).position().top
+            let zombie_bottom = zombie_top + zombie_height
+
+            let oliver_height = $("#oliver").height()
+            let oliver_top = $("#oliver").position().top
+            let oliver_bottom = oliver_top + oliver_height
+
+            if (zombie_bottom < oliver_top || zombie_top > oliver_bottom) {
+              return false
+            }
+            // debugger
+            return true
+          }).length > 0) {
+          $("#gameover #score").text(`SCORE: ${Math.round((Date.now() - start_time) / 1000)} secs`)
+          clearInterval(zombie_timer)
+          clearInterval(collision_interval)
+          $("#gameover").show()
+          $(".zombie, #oliver").remove()
+        }
+      }
+
+      const collision_interval = setInterval(is_there_a_collision, 10)
+
+      const clean_up_zombies = () =>
+        $(".zombie").filter((i, e) => $(e).position().left + $(e).width() <= 1).remove()
+
+      setInterval(clean_up_zombies, 50)
+
+      $("#gameover").click(() => window.location.reload())
+    })
+  </script>
+
+</head>
+
+<body>
+<div id="background"></div>
+<div id="oliver"></div>
+<div id="jump">JUMP OLIVER JUMP!</div>
+<div id="gameover"><p>GAME OVER TRY AGAIN</p>
+  <p id="score"></p>
+  <p id="credit">By Oliver Williams</p>
+</div>
+</body>
+</html>
